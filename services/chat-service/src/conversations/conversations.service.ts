@@ -6,6 +6,7 @@ import { Membership, MembershipRole } from './entities/membership.entity';
 import { User } from '../users/user.entity';
 import { CreateDmDto } from './dto/create-dm.dto';
 import { CreateGroupDto } from './dto/create-group.dto';
+import { KafkaService } from '../kafka/kafka.service';
 
 @Injectable()
 export class ConversationsService {
@@ -16,6 +17,7 @@ export class ConversationsService {
     private membershipsRepository: Repository<Membership>,
     @InjectRepository(User)
     private usersRepository: Repository<User>,
+    private kafkaService: KafkaService,
   ) {}
 
   async createDm(userId: string, createDmDto: CreateDmDto): Promise<Conversation> {
@@ -53,6 +55,30 @@ export class ConversationsService {
         role: MembershipRole.MEMBER,
       },
     ]);
+
+    // Fetch usernames for DM display
+    const users = await this.usersRepository.find({
+      where: {
+        user_id: In([userId, other_user_id]),
+      },
+      select: ['user_id', 'username'],
+    });
+
+    const members = users.map(u => ({
+      user_id: u.user_id,
+      username: u.username,
+    }));
+
+    // Emit conversation.new event with member info for DMs
+    await this.kafkaService.publishConversationNew({
+      conversation_id: savedConversation.conversation_id,
+      type: savedConversation.type,
+      title: savedConversation.title,
+      member_ids: [userId, other_user_id],
+      members, // Include for DM display
+      created_by: userId,
+      created_at: savedConversation.created_at.toISOString(),
+    });
 
     return savedConversation;
   }
@@ -92,6 +118,18 @@ export class ConversationsService {
     ];
 
     await this.membershipsRepository.save(memberships);
+
+    // Emit conversation.new event (no members needed for groups - they have title)
+    const allMemberIds = [userId, ...uniqueMemberIds];
+    await this.kafkaService.publishConversationNew({
+      conversation_id: savedConversation.conversation_id,
+      type: savedConversation.type,
+      title: savedConversation.title,
+      member_ids: allMemberIds,
+      // No members array for groups - frontend uses title
+      created_by: userId,
+      created_at: savedConversation.created_at.toISOString(),
+    });
 
     return savedConversation;
   }

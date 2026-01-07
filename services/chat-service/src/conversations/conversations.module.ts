@@ -7,6 +7,7 @@ import { ConversationsController } from './conversations.controller';
 import { InternalConversationsController } from './internal.controller';
 import { ConversationsService } from './conversations.service';
 import { InvitesService } from './invites.service';
+import { KafkaModule } from '../kafka/kafka.module';
 import { Conversation } from './entities/conversation.entity';
 import { Membership } from './entities/membership.entity';
 import { Invite } from './entities/invite.entity';
@@ -17,6 +18,7 @@ import { JwtStrategy } from '../auth/jwt.strategy';
 @Module({
   imports: [
     TypeOrmModule.forFeature([Conversation, Membership, Invite, Read, User]),
+    KafkaModule,
     PassportModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],

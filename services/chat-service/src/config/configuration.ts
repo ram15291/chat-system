@@ -12,6 +12,10 @@ export default () => {
     redis: {
       url: process.env.REDIS_URL,
     },
+    kafka: {
+      brokers: (process.env.KAFKA_BROKERS || 'localhost:9092').split(','),
+      clientId: process.env.KAFKA_CLIENT_ID || 'chat-service',
+    },
     membershipCacheTTL: parseInt(process.env.MEMBERSHIP_CACHE_TTL, 10) || 60,
     jwt: {
       secret: process.env.JWT_SECRET,

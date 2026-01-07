@@ -17,6 +17,7 @@ export interface Conversation {
   type: 'DM' | 'GROUP';
   title?: string | null;
   name?: string; // Computed from title
+  created_by?: string;
   created_at: string;
   members?: Member[]; // Only populated for DMs
   last_message?: {
@@ -41,7 +42,7 @@ export interface Message {
 export interface Member {
   user_id: string;
   username: string;
-  role: string;
+  role?: string; // Optional for conversation events
 }
 
 export interface MessageNewEvent {

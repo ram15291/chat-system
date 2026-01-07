@@ -1,6 +1,15 @@
 import { io, Socket } from 'socket.io-client';
 import { MessageNewEvent } from '../types';
 
+interface ConversationNewEvent {
+  conversation_id: string;
+  type: 'DM' | 'GROUP';
+  title?: string;
+  members?: Array<{ user_id: string; username: string }>;
+  created_by: string;
+  created_at: string;
+}
+
 // ✅ Prefer NGINX/frontdoor by default (http://localhost)
 // Set REACT_APP_WS_URL=http://localhost to override if needed
 const WS_URL = process.env.REACT_APP_WS_URL || 'http://localhost';
@@ -8,6 +17,7 @@ const WS_URL = process.env.REACT_APP_WS_URL || 'http://localhost';
 class WebSocketService {
   private socket: Socket | null = null;
   private messageHandlers: Array<(event: MessageNewEvent) => void> = [];
+  private conversationHandlers: Array<(event: ConversationNewEvent) => void> = [];
   private connectionHandlers: Array<(connected: boolean) => void> = [];
 
   // Optional: keep the latest token so reconnects work consistently
@@ -101,6 +111,11 @@ class WebSocketService {
       this.messageHandlers.forEach((handler) => handler(data));
     });
 
+    this.socket.on('conversation.new', (data: ConversationNewEvent) => {
+      console.log('Received conversation.new:', data);
+      this.conversationHandlers.forEach((handler) => handler(data));
+    });
+
     this.socket.on('pong', (data) => {
       console.log('Pong received:', data);
     });
@@ -144,6 +159,13 @@ class WebSocketService {
     this.messageHandlers.push(handler);
     return () => {
       this.messageHandlers = this.messageHandlers.filter((h) => h !== handler);
+    };
+  }
+
+  onConversation(handler: (event: ConversationNewEvent) => void) {
+    this.conversationHandlers.push(handler);
+    return () => {
+      this.conversationHandlers = this.conversationHandlers.filter((h) => h !== handler);
     };
   }
 

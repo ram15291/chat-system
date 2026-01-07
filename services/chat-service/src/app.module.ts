@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConversationsModule } from './conversations/conversations.module';
+import { KafkaModule } from './kafka/kafka.module';
 import { HealthController } from './health/health.controller';
 import configuration from './config/configuration';
 import { validationSchema } from './config/validation.schema';
@@ -33,6 +34,7 @@ import { User } from './users/user.entity';
       }),
       inject: [ConfigService],
     }),
+    KafkaModule,
     ConversationsModule,
   ],
   controllers: [HealthController],

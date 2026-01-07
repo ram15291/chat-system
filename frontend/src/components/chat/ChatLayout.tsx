@@ -6,6 +6,7 @@ import { NewGroupDialog } from './NewGroupDialog';
 import { Conversation } from '../../types';
 import { chatService } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
+import { wsService } from '../../services/websocket';
 import './Chat.css';
 
 export const ChatLayout: React.FC = () => {
@@ -19,6 +20,34 @@ export const ChatLayout: React.FC = () => {
 
   useEffect(() => {
     loadConversations();
+
+    // Listen for new conversations via WebSocket
+    const unsubscribe = wsService.onConversation((event) => {
+      console.log('New conversation received:', event);
+      
+      // Create conversation object from WebSocket event
+      const newConv: Conversation = {
+        conversation_id: event.conversation_id,
+        type: event.type,
+        title: event.title,
+        members: event.members, // Include for DMs
+        created_by: event.created_by,
+        created_at: event.created_at,
+      };
+      
+      setConversations(prev => {
+        // Check if already exists
+        if (prev.some(c => c.conversation_id === event.conversation_id)) {
+          return prev;
+        }
+        // Add to top of list
+        return [newConv, ...prev];
+      });
+    });
+
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   const loadConversations = async () => {

@@ -167,6 +167,7 @@ services:
         echo "Creating Kafka topics..."
         kafka-topics --create --if-not-exists --topic message.new --bootstrap-server kafka:9093 --partitions 3 --replication-factor 1
         kafka-topics --create --if-not-exists --topic message.fanout --bootstrap-server kafka:9093 --partitions 3 --replication-factor 1
+        kafka-topics --create --if-not-exists --topic conversation.new --bootstrap-server kafka:9093 --partitions 3 --replication-factor 1
         echo "Kafka topics created."
     networks: [chat-network]
 
@@ -256,6 +257,10 @@ services:
       REDIS_URL: redis://redis:6379
       MEMBERSHIP_CACHE_TTL: 60
       JWT_SECRET: your-super-secret-jwt-key-change-in-production
+      
+      # Kafka
+      KAFKA_BROKERS: kafka:9093
+      KAFKA_CLIENT_ID: chat-service
     # depends_on: *common_depends
     expose:
       - "3002"

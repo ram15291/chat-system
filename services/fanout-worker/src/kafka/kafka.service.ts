@@ -13,6 +13,16 @@ interface MessageNewEvent {
   preview: string;
 }
 
+interface ConversationNewEvent {
+  conversation_id: string;
+  type: string;
+  title?: string;
+  member_ids: string[];
+  members?: Array<{ user_id: string; username: string }>;
+  created_by: string;
+  created_at: string;
+}
+
 @Injectable()
 export class KafkaService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(KafkaService.name);
@@ -40,9 +50,9 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
     await this.consumer.connect();
     this.logger.log('Kafka consumer connected');
 
-    // Subscribe to message.new topic
-    await this.consumer.subscribe({ topic: 'message.new', fromBeginning: false });
-    this.logger.log('Subscribed to topic: message.new');
+    // Subscribe to topics
+    await this.consumer.subscribe({ topics: ['message.new', 'conversation.new'], fromBeginning: false });
+    this.logger.log('Subscribed to topics: message.new, conversation.new');
 
     // Start consuming messages
     await this.consumer.run({
@@ -72,14 +82,21 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
         return;
       }
 
-      const event: MessageNewEvent = JSON.parse(value);
-      this.logger.log(
-        `Received message: conversation=${event.conversation_id}, seq=${event.seq}, sender=${event.sender_id}`,
-      );
-
-      await this.fanoutMessage(event);
+      if (topic === 'message.new') {
+        const event: MessageNewEvent = JSON.parse(value);
+        this.logger.log(
+          `Received message.new: conversation=${event.conversation_id}, seq=${event.seq}`,
+        );
+        await this.fanoutMessage(event);
+      } else if (topic === 'conversation.new') {
+        const event: ConversationNewEvent = JSON.parse(value);
+        this.logger.log(
+          `Received conversation.new: conversation=${event.conversation_id}, type=${event.type}`,
+        );
+        await this.fanoutConversation(event);
+      }
     } catch (error) {
-      this.logger.error('Failed to process message:', error);
+      this.logger.error(`Failed to process ${topic} event:`, error);
     }
   }
 
@@ -138,6 +155,55 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
       this.logger.log(`Fanout completed for message ${event.message_id}`);
     } catch (error) {
       this.logger.error(`Fanout failed for message ${event.message_id}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Fanout new conversation to all members
+   */
+  private async fanoutConversation(event: ConversationNewEvent) {
+    try {
+      this.logger.debug(
+        `Fanout conversation to ${event.member_ids.length} members: ${event.member_ids.join(', ')}`,
+      );
+
+      // For each member, notify them about the new conversation
+      const deliveryPromises = event.member_ids.map(async (userId) => {
+        // Skip creator (they already have it from the API response)
+        if (userId === event.created_by) {
+          this.logger.debug(`Skipping creator ${userId}`);
+          return;
+        }
+
+        // Check if user is connected to a gateway
+        const gatewayId = await this.redisService.getUserGateway(userId);
+
+        if (gatewayId) {
+          // Publish to the gateway's Redis channel
+          await this.redisService.publishToGateway(gatewayId, {
+            userId,
+            event: 'conversation.new',
+            data: {
+              conversation_id: event.conversation_id,
+              type: event.type,
+              title: event.title,
+              members: event.members, // Include if present (DMs only)
+              created_by: event.created_by,
+              created_at: event.created_at,
+            },
+          });
+
+          this.logger.log(`→ Published conversation to user ${userId} via gateway ${gatewayId}`);
+        } else {
+          this.logger.debug(`User ${userId} not connected (offline)`);
+        }
+      });
+
+      await Promise.all(deliveryPromises);
+      this.logger.log(`Fanout completed for conversation ${event.conversation_id}`);
+    } catch (error) {
+      this.logger.error(`Fanout failed for conversation ${event.conversation_id}:`, error);
       throw error;
     }
   }
