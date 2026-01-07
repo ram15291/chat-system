@@ -128,7 +128,7 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
             },
           });
 
-          this.logger.debug(`Delivered to user ${userId} via gateway ${gatewayId}`);
+          this.logger.log(`→ Published to user ${userId} via gateway ${gatewayId}`);
         } else {
           this.logger.debug(`User ${userId} not connected (offline)`);
         }

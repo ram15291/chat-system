@@ -125,11 +125,12 @@ export class EventsGateway
       
       await this.redisService.trackConnection(userId);
 
-      this.logger.log(`CONNECTED: user=${userId}`);
+      const gatewayId = this.redisService.getGatewayId();
+      this.logger.log(`CONNECTED: user=${userId} gateway=${gatewayId}`);
       
       client.emit('connected', {
         userId,
-        gatewayId: this.redisService.getGatewayId(),
+        gatewayId,
         timestamp: new Date().toISOString(),
       });
 
@@ -165,13 +166,14 @@ export class EventsGateway
     }
 
     const socket = this.connections.get(userId);
+    const gatewayId = this.redisService.getGatewayId();
     
     if (socket) {
       // Send message to the user's socket
       socket.emit(event, data);
-      this.logger.debug(`Delivered ${event} to user ${userId}`);
+      this.logger.log(`✓ Delivered ${event} to user ${userId} via gateway ${gatewayId}`);
     } else {
-      this.logger.debug(`User ${userId} not connected to this gateway`);
+      this.logger.debug(`User ${userId} not connected to gateway ${gatewayId}`);
     }
   }
 

@@ -957,8 +957,6 @@ chat-system/
 ---
 
 ## References
-
-- [System Design Interview Vol 2 - Chat System](https://www.amazon.com/System-Design-Interview-Insiders-Guide/dp/1736049119)
 - [NestJS WebSocket Documentation](https://docs.nestjs.com/websockets/gateways)
 - [LocalStack Documentation](https://docs.localstack.cloud/)
 - [DynamoDB Best Practices](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/best-practices.html)
