@@ -123,12 +123,12 @@ export const chatService = {
 export const messageService = {
   getMessages: async (
     conversationId: string,
-    afterSeq?: number,
+    beforeSeq?: number,
     limit: number = 50
   ): Promise<Message[]> => {
     const params: any = { limit };
-    if (afterSeq) {
-      params.after_seq = afterSeq;
+    if (beforeSeq) {
+      params.before_seq = beforeSeq;
     }
 
     const response = await api.get<Message[]>(

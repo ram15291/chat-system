@@ -23,7 +23,8 @@ export const MessageView: React.FC<Props> = ({ conversationId, conversation }) =
     setIsLoading(true);
     try {
       const data = await messageService.getMessages(conversationId, undefined, 50);
-      setMessages(data.reverse()); // Reverse to show oldest first
+      // API returns messages in descending order (newest first), reverse to show oldest first
+      setMessages(data.reverse());
       setHasMore(data.length === 50);
     } catch (error) {
       console.error('Failed to load messages:', error);
@@ -67,8 +68,10 @@ export const MessageView: React.FC<Props> = ({ conversationId, conversation }) =
     const oldestSeq = Math.min(...messages.map(m => m.seq));
     
     try {
+      // API returns messages with seq < oldestSeq in descending order
       const data = await messageService.getMessages(conversationId, oldestSeq, 50);
       if (data.length > 0) {
+        // Reverse to get oldest first, then prepend to existing messages
         setMessages((prev) => [...data.reverse(), ...prev]);
         setHasMore(data.length === 50);
       } else {
@@ -133,7 +136,7 @@ export const MessageView: React.FC<Props> = ({ conversationId, conversation }) =
       setMessages((prev) =>
         prev.map((msg) =>
           msg.message_id === messageId
-            ? { ...msg, full_body: fullMessage.full_body, has_more: false }
+            ? { ...msg, full_body: (fullMessage as any).body || fullMessage.full_body, has_more: false }
             : msg
         )
       );
@@ -154,7 +157,7 @@ export const MessageView: React.FC<Props> = ({ conversationId, conversation }) =
     <div className="message-view">
       <MessageList
         messages={messages}
-        currentUserId={user?.id || ''}
+        currentUserId={user?.user_id || ''}
         isGroupChat={conversation?.type === 'GROUP'}
         members={members}
         hasMore={hasMore}

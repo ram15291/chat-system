@@ -213,6 +213,8 @@
   display: flex;
   flex-direction: column;
   background: #f8f9fa;
+  min-width: 0;
+  min-height: 0;
 }
 
 .empty-state {
@@ -237,15 +239,17 @@
   flex: 1;
   display: flex;
   flex-direction: column;
+  min-height: 0;
+  height: 100%;
 }
 
 .message-list {
-  flex: 1;
+  flex: 1 1 auto;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+  min-height: 0;
+  display: block;
 }
 
 .load-more-container {
@@ -272,8 +276,7 @@
 .message-item {
   display: flex;
   width: 100%;
-  margin-bottom: 8px;
-  clear: both;
+  margin-bottom: 12px;
   align-items: flex-end;
   gap: 8px;
 }
@@ -303,18 +306,21 @@
 
 .message-bubble {
   max-width: 60%;
+  width: fit-content;
   padding: 10px 14px;
   border-radius: 12px;
   word-wrap: break-word;
 }
 
-.own-message .message-bubble {
+.message-item.own-message .message-bubble {
+  margin-left: auto;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border-bottom-right-radius: 4px;
 }
 
-.other-message .message-bubble {
+.message-item.other-message .message-bubble {
+  margin-right: auto;
   background: white;
   color: #333;
   border-bottom-left-radius: 4px;
@@ -336,11 +342,13 @@
   margin-top: 4px;
 }
 
-.own-message .message-footer {
+.message-item.own-message .message-footer {
+  justify-content: flex-end;
+  gap: 8px;
   color: rgba(255, 255, 255, 0.8);
 }
 
-.other-message .message-footer {
+.message-item.other-message .message-footer {
   color: #999;
 }
 
@@ -383,6 +391,7 @@
   display: flex;
   gap: 12px;
   align-items: flex-end;
+  flex-shrink: 0;
 }
 
 .message-input textarea {

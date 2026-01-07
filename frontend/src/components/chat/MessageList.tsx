@@ -54,7 +54,11 @@ export const MessageList: React.FC<Props> = ({
       
       {messages.map((message) => {
         // If sender_id is missing, treat as other user's message (safest default)
-        const isOwnMessage = message.sender_id ? message.sender_id === currentUserId : false;
+        const isOwnMessage = String(message.sender_id) === String(currentUserId);
+        console.log(message.sender_id)
+        console.log(currentUserId)
+        console.log(isOwnMessage)
+        console.log('****')
         const displayText = message.full_body || message.preview;
         
         // Get member info for avatar

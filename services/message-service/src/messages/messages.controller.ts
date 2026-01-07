@@ -46,7 +46,7 @@ export class MessagesController {
   ) {
     return await this.messagesService.getMessages(
       conversationId,
-      query.after_seq,
+      query.before_seq,
       query.limit || 200,
     );
   }

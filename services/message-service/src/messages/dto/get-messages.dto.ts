@@ -6,7 +6,7 @@ export class GetMessagesDto {
   @Type(() => Number)
   @IsInt()
   @Min(0)
-  after_seq?: number;
+  before_seq?: number;
 
   @IsOptional()
   @Type(() => Number)

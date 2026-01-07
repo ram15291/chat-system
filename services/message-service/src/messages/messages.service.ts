@@ -118,15 +118,16 @@ export class MessagesService {
   /**
    * Get message history for a conversation
    * Returns preview only (first 200 chars)
+   * Returns messages in descending order (newest first)
    */
   async getMessages(
     conversationId: string,
-    afterSeq?: number,
+    beforeSeq?: number,
     limit: number = 200,
   ): Promise<MessagePreview[]> {
     const messages = await this.dynamoDBService.queryMessages(
       conversationId,
-      afterSeq,
+      beforeSeq,
       limit,
     );
 

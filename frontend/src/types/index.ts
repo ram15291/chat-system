@@ -1,5 +1,6 @@
 export interface User {
-  id: string;
+  user_id: string;
+  id?: string; // Alias for user_id
   username: string;
   email: string;
 }

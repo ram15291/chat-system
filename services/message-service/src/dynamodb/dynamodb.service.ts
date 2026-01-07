@@ -58,7 +58,7 @@ export class DynamoDBService implements OnModuleInit {
 
   async queryMessages(
     conversationId: string,
-    afterSeq?: number,
+    beforeSeq?: number,
     limit: number = 200,
   ): Promise<any[]> {
     const params: any = {
@@ -68,12 +68,12 @@ export class DynamoDBService implements OnModuleInit {
         ':cid': conversationId,
       },
       Limit: limit,
-      ScanIndexForward: true, // ascending order by seq
+      ScanIndexForward: false, // descending order by seq (newest first)
     };
 
-    if (afterSeq !== undefined) {
-      params.KeyConditionExpression += ' AND seq > :afterSeq';
-      params.ExpressionAttributeValues[':afterSeq'] = afterSeq;
+    if (beforeSeq !== undefined) {
+      params.KeyConditionExpression += ' AND seq < :beforeSeq';
+      params.ExpressionAttributeValues[':beforeSeq'] = beforeSeq;
     }
 
     const result = await this.docClient.send(new QueryCommand(params));
