@@ -319,8 +319,6 @@ services:
     environment:
       <<: *common_env
       PORT: 3004
-      # Use container hostname for unique gateway ID when scaling
-      GATEWAY_ID: $${HOSTNAME}
       REDIS_URL: redis://redis:6379
       JWT_SECRET: your-super-secret-jwt-key-change-in-production
       HEARTBEAT_INTERVAL: 30000
