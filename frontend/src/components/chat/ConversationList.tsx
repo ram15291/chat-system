@@ -6,6 +6,7 @@ interface Props {
   selectedId: string | null;
   onSelect: (id: string) => void;
   isLoading: boolean;
+  currentUserId?: string;
 }
 
 export const ConversationList: React.FC<Props> = ({
@@ -13,7 +14,16 @@ export const ConversationList: React.FC<Props> = ({
   selectedId,
   onSelect,
   isLoading,
+  currentUserId,
 }) => {
+  const getDisplayName = (conv: Conversation) => {
+    if (conv.type === 'DM' && conv.members) {
+      // Find the other user (not the current user)
+      const otherMember = conv.members.find(m => m.user_id !== currentUserId);
+      return otherMember?.username || 'Unknown User';
+    }
+    return conv.title || 'Group Chat';
+  };
   const formatTime = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -57,12 +67,12 @@ export const ConversationList: React.FC<Props> = ({
           onClick={() => onSelect(conv.conversation_id)}
         >
           <div className="conversation-avatar">
-            {conv.title ? conv.title.charAt(0).toUpperCase() : conv.type === 'DM' ? 'D' : 'G'}
+            {getDisplayName(conv).charAt(0).toUpperCase()}
           </div>
           <div className="conversation-details">
             <div className="conversation-header">
               <span className="conversation-name">
-                {conv.title || `${conv.type} Chat`}
+                {getDisplayName(conv)}
               </span>
               {conv.last_message && (
                 <span className="conversation-time">

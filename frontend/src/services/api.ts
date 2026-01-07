@@ -91,6 +91,16 @@ export const chatService = {
     return response.data;
   },
 
+  getDMs: async (): Promise<Conversation[]> => {
+    const response = await api.get<Conversation[]>('/api/chats/conversations/dms');
+    return response.data;
+  },
+
+  getGroups: async (): Promise<Conversation[]> => {
+    const response = await api.get<Conversation[]>('/api/chats/conversations/groups');
+    return response.data;
+  },
+
   createDM: async (recipientId: string): Promise<Conversation> => {
     const response = await api.post<Conversation>('/api/chats/conversations/dm', {
       other_user_id: recipientId,

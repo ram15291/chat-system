@@ -18,11 +18,13 @@ export interface Conversation {
   title?: string | null;
   name?: string; // Computed from title
   created_at: string;
+  members?: Member[]; // Only populated for DMs
   last_message?: {
     preview: string;
     created_at: string;
     sender_id: string;
   };
+  last_message_at?: string;
 }
 
 export interface Message {

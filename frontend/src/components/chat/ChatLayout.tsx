@@ -23,8 +23,20 @@ export const ChatLayout: React.FC = () => {
 
   const loadConversations = async () => {
     try {
-      const data = await chatService.getConversations();
-      setConversations(data);
+      // Fetch DMs and groups in parallel
+      const [dms, groups] = await Promise.all([
+        chatService.getDMs(),
+        chatService.getGroups(),
+      ]);
+
+      // Merge and sort by last_message_at
+      const allConversations = [...dms, ...groups].sort((a, b) => {
+        if (!a.last_message_at) return 1;
+        if (!b.last_message_at) return -1;
+        return new Date(b.last_message_at).getTime() - new Date(a.last_message_at).getTime();
+      });
+
+      setConversations(allConversations);
     } catch (error) {
       console.error('Failed to load conversations:', error);
     } finally {
@@ -92,6 +104,7 @@ export const ChatLayout: React.FC = () => {
           selectedId={selectedConversation}
           onSelect={handleConversationSelect}
           isLoading={isLoading}
+          currentUserId={user?.user_id}
         />
       </div>
       <div className="chat-main">

@@ -39,6 +39,16 @@ export class ConversationsController {
     return this.conversationsService.findUserConversations(req.user.user_id);
   }
 
+  @Get('dms')
+  async getUserDMs(@Request() req) {
+    return this.conversationsService.findUserDMs(req.user.user_id);
+  }
+
+  @Get('groups')
+  async getUserGroups(@Request() req) {
+    return this.conversationsService.findUserGroups(req.user.user_id);
+  }
+
   @Get(':id')
   async getConversation(@Request() req, @Param('id') conversationId: string) {
     return this.conversationsService.findConversationById(

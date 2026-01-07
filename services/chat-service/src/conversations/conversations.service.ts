@@ -35,7 +35,7 @@ export class ConversationsService {
     const conversation = this.conversationsRepository.create({
       type: ConversationType.DM,
       created_by: userId,
-      title: null, // DMs don't have titles
+      title: null, // DMs don't have titles - computed on frontend
     });
 
     const savedConversation = await this.conversationsRepository.save(conversation);
@@ -113,6 +113,62 @@ export class ConversationsService {
         if (!b.last_message_at) return -1;
         return b.last_message_at.getTime() - a.last_message_at.getTime();
       });
+  }
+
+  async findUserDMs(userId: string): Promise<any[]> {
+    // Get DM conversations with member info in a single query
+    const dms = await this.conversationsRepository
+      .createQueryBuilder('conv')
+      .innerJoin('memberships', 'm1', 'm1.conversation_id = conv.conversation_id AND m1.user_id = :userId AND m1.left_at IS NULL', { userId })
+      .innerJoin('memberships', 'm2', 'm2.conversation_id = conv.conversation_id AND m2.user_id != :userId AND m2.left_at IS NULL', { userId })
+      .innerJoin('users', 'u', 'u.user_id = m2.user_id')
+      .where('conv.type = :type', { type: ConversationType.DM })
+      .select([
+        'conv.conversation_id AS conversation_id',
+        'conv.type AS type',
+        'conv.title AS title',
+        'conv.created_by AS created_by',
+        'conv.created_at AS created_at',
+        'conv.last_seq AS last_seq',
+        'conv.last_message_id AS last_message_id',
+        'conv.last_message_at AS last_message_at',
+        'conv.last_preview AS last_preview',
+        'conv.last_has_more AS last_has_more',
+        'u.user_id AS other_user_id',
+        'u.username AS other_username',
+      ])
+      .getRawMany();
+
+    return dms.map(dm => ({
+      conversation_id: dm.conversation_id,
+      type: dm.type,
+      title: dm.title,
+      created_by: dm.created_by,
+      created_at: dm.created_at,
+      last_seq: Number(dm.last_seq),
+      last_message_id: dm.last_message_id,
+      last_message_at: dm.last_message_at,
+      last_preview: dm.last_preview,
+      last_has_more: dm.last_has_more,
+      members: [
+        { user_id: userId, username: null }, // Current user
+        { user_id: dm.other_user_id, username: dm.other_username },
+      ],
+    }));
+  }
+
+  async findUserGroups(userId: string): Promise<Conversation[]> {
+    const memberships = await this.membershipsRepository.find({
+      where: {
+        user_id: userId,
+        left_at: IsNull(),
+      },
+      relations: ['conversation'],
+    });
+
+    return memberships
+      .map(m => m.conversation)
+      .filter(c => c.type === ConversationType.GROUP);
   }
 
   async findConversationById(conversationId: string, userId: string): Promise<Conversation> {
